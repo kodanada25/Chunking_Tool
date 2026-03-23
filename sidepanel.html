@@ -103,6 +103,9 @@ textarea{
   color:#111;font-family:'Courier New',Courier,monospace;
   font-size:.82rem;line-height:1.85;padding:1.5rem 2rem 8rem;
   overflow:hidden;
+  white-space:pre-wrap;
+  word-break:break-word;
+  overflow-wrap:break-word;
 }
 textarea::placeholder{color:var(--faint)}
 
@@ -229,7 +232,11 @@ textarea::placeholder{color:var(--faint)}
 .chunk-kb{font-family:'Courier New',Courier,monospace;font-size:.88rem;font-weight:700;color:#0F5599}
 .chunk-ch{font-family:'Courier New',Courier,monospace;font-size:.52rem;color:var(--muted)}
 .chunk-body{flex:1;padding:.55rem .8rem;font-family:'Courier New',Courier,monospace;font-size:.7rem;line-height:1.55;color:#111;background:#fff;white-space:pre-wrap;word-break:break-word;max-height:80px;overflow:hidden;position:relative;cursor:pointer}
-.chunk-body.exp{max-height:none}
+.chunk-body.exp{max-height:300px;overflow-y:auto}
+.chunk-body.exp::-webkit-scrollbar{width:5px}
+.chunk-body.exp::-webkit-scrollbar-track{background:var(--s1);border-radius:3px}
+.chunk-body.exp::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px}
+.chunk-body.exp::-webkit-scrollbar-thumb:hover{background:#8a99b0}
 .chunk-body:not(.exp)::after{content:'';position:absolute;bottom:0;left:0;right:0;height:24px;background:linear-gradient(transparent,#fff)}
 .chunk-cp{flex-shrink:0;width:36px;background:var(--s2);border:none;border-left:1px solid var(--border);color:var(--muted);cursor:pointer;font-family:'Courier New',Courier,monospace;font-size:.55rem;writing-mode:vertical-rl;transition:all .15s}
 .chunk-cp:hover{color:#0F5599;background:var(--accent-light)}

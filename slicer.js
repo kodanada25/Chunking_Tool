@@ -69,8 +69,9 @@ let cuts = [];            // locked cut positions in px (sorted ascending)
 let activeBottomPx = 0;   // where the current draggable blind ends
 let dragging = null;      // {type:'cut'|'active', idx?:number, startY, startVal, startScroll}
 let autoRaf = null;
-let cutChars = [];        // char indices corresponding to each cut (canonical state)
-let activeBottomChar = 0; // char index for active bottom (canonical state)
+let cutChars = [];        // char indices corresponding to each cut (canonical / source-of-truth)
+let activeBottomChar = 0; // char index for active bottom (canonical / source-of-truth)
+let _resizing = false;    // true while ResizeObserver handler runs (prevents char state corruption)
 
 const txtEl      = document.getElementById('txt');
 const scroller   = document.getElementById('scroller');
@@ -92,26 +93,32 @@ function syncHeights(){
 // ── MIRROR DIV for accurate px → char mapping ──────────────
 let mirror = null;
 
+const MIRROR_STYLE_PROPS = [
+  'fontFamily','fontSize','fontWeight','fontStyle','fontVariant','fontStretch',
+  'lineHeight','letterSpacing','wordSpacing','textTransform','textIndent',
+  'textRendering','textDecoration','textAlign',
+  'whiteSpace','wordBreak','overflowWrap','wordWrap','hyphens','tabSize',
+  'direction','writingMode','unicodeBidi',
+  'padding','paddingTop','paddingRight','paddingBottom','paddingLeft',
+  'borderWidth','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth',
+  'borderStyle','boxSizing',
+];
+
 function ensureMirror(){
   if(mirror) return;
   mirror = document.createElement('div');
   const cs = window.getComputedStyle(txtEl);
   const s = mirror.style;
-  s.position    = 'absolute';
-  s.top         = '0';
-  s.left        = '0';
-  s.opacity     = '0';
+  MIRROR_STYLE_PROPS.forEach(p => { if(cs[p]) s[p] = cs[p]; });
+  s.position      = 'absolute';
+  s.top           = '0';
+  s.left          = '0';
+  s.opacity       = '0';
   s.pointerEvents = 'none';
-  s.zIndex      = '-1';
-  s.whiteSpace  = 'pre-wrap';
-  s.wordBreak   = 'break-word';
-  s.overflowWrap= 'break-word';
-  s.fontFamily  = cs.fontFamily;
-  s.fontSize    = cs.fontSize;
-  s.lineHeight  = cs.lineHeight;
-  s.padding     = cs.padding;
-  s.width       = txtEl.offsetWidth + 'px';
-  s.boxSizing   = 'border-box';
+  s.zIndex        = '-1';
+  s.height        = 'auto';
+  s.overflow      = 'visible';
+  s.width         = txtEl.offsetWidth + 'px';
   scrollInner.insertBefore(mirror, overlay);
 }
 
@@ -187,6 +194,11 @@ function render(){
   overlay.innerHTML = '';
   if(!text) return;
 
+  if(!_resizing){
+    cutChars = cuts.map(px => pxToChar(px));
+    activeBottomChar = pxToChar(activeBottomPx);
+  }
+
   const totalH = txtEl.scrollHeight;
   // all boundaries: 0, ...cuts, activeBottomPx (if > last cut), totalH
   const lastCut = cuts.length ? cuts[cuts.length-1] : 0;
@@ -196,10 +208,11 @@ function render(){
   borders.forEach((startPx, i) => {
     const endPx = i < cuts.length ? cuts[i] : activeBottomPx;
     if(endPx <= startPx) return;
-    const {bytes, chars} = bytesInRange(startPx, endPx);
-    const hPct = ((endPx - startPx) / totalH) * 100;
+    const startCh = i > 0 ? cutChars[i-1] : 0;
+    const endCh   = i < cutChars.length ? cutChars[i] : activeBottomChar;
+    const bytes = ENC.encode(text.slice(startCh, endCh)).length;
+    const chars = endCh - startCh;
 
-    // band
     const band = document.createElement('div');
     band.className = 'seg-band';
     band.style.cssText = `top:${startPx}px;height:${endPx-startPx}px;`;
@@ -218,8 +231,10 @@ function render(){
   const activeTop = lastCut;
   const activeBot = activeBottomPx;
   if(activeBot > activeTop){
-    const ci = cuts.length; // color index for active
-    const {bytes, chars} = bytesInRange(activeTop, activeBot);
+    const ci = cuts.length;
+    const lastCutCh = cutChars.length ? cutChars[cutChars.length-1] : 0;
+    const bytes = ENC.encode(text.slice(lastCutCh, activeBottomChar)).length;
+    const chars = activeBottomChar - lastCutCh;
     const atLimit = bytes >= MAX_CHUNK_BYTES;
     const nearLimit = bytes >= MAX_CHUNK_BYTES * 0.9;
     const badgeColor = atLimit ? '#c0392b' : nearLimit ? '#c05a00' : '#0F5599';
@@ -243,9 +258,8 @@ function render(){
     const h = document.createElement('div');
     h.className = 'cut-handle';
     h.style.top = cutPx + 'px';
-    const prevPx = idx > 0 ? cuts[idx-1] : 0;
-    const nextPx = idx < cuts.length-1 ? cuts[idx+1] : activeBottomPx;
-    const {bytes: prevBytes} = bytesInRange(prevPx, cutPx);
+    const prevCh = idx > 0 ? cutChars[idx-1] : 0;
+    const prevBytes = ENC.encode(text.slice(prevCh, cutChars[idx])).length;
     h.innerHTML = `
       <div class="cut-line"></div>
       <div class="cut-pill"></div>
@@ -298,7 +312,6 @@ function render(){
     overlay.appendChild(ah);
   }
 
-  syncCharState();
   updateStats();
   saveSession();
 }
@@ -432,7 +445,9 @@ new ResizeObserver(() => {
     } else {
       activeBottomPx = 0;
     }
+    _resizing = true;
     render();
+    _resizing = false;
   });
 }).observe(txtEl);
 
@@ -556,15 +571,18 @@ function getTransformedSegments(){
 }
 
 function getSegments(){
-  const borders = [0, ...cuts];
-  const totalH = txtEl.scrollHeight;
-  // include active blind if it has content
-  const lastCut = cuts.length ? cuts[cuts.length-1] : 0;
-  if(activeBottomPx > lastCut + 10) borders.push(activeBottomPx);
-  return borders.slice(0,-1).map((startPx, i) => {
-    const endPx = borders[i+1];
-    const {bytes, chars, content} = bytesInRange(startPx, endPx);
-    return {bytes, chars, content, colorIdx: i};
+  const charBorders = [0, ...cutChars];
+  const lastCutCh = cutChars.length ? cutChars[cutChars.length-1] : 0;
+  if(activeBottomChar > lastCutCh) charBorders.push(activeBottomChar);
+  return charBorders.slice(0,-1).map((startCh, i) => {
+    const endCh = charBorders[i+1];
+    const content = text.slice(startCh, endCh);
+    return {
+      bytes: ENC.encode(content).length,
+      chars: endCh - startCh,
+      content,
+      colorIdx: i
+    };
   }).filter(s => s.chars > 0);
 }
 
