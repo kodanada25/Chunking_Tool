@@ -193,7 +193,8 @@ function getLine(charIdx){
 }
 
 function isOnBlankLine(charIdx){
-  if(!text.length || charIdx < 0 || charIdx >= text.length) return false;
+  if(!text.length || charIdx < 0) return false;
+  if(charIdx >= text.length) return true;
   if(getLine(charIdx).trim().length === 0) return true;
   const nextNl = text.indexOf('\n', charIdx);
   if(nextNl !== -1 && nextNl + 1 < text.length){
