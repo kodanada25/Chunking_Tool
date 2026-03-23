@@ -184,6 +184,24 @@ function bytesInRange(startPx, endPx){
   };
 }
 
+function getLine(charIdx){
+  let s = charIdx;
+  while(s > 0 && text[s - 1] !== '\n') s--;
+  let e = charIdx;
+  while(e < text.length && text[e] !== '\n') e++;
+  return text.slice(s, e);
+}
+
+function isOnBlankLine(charIdx){
+  if(!text.length || charIdx < 0 || charIdx >= text.length) return false;
+  if(getLine(charIdx).trim().length === 0) return true;
+  const nextNl = text.indexOf('\n', charIdx);
+  if(nextNl !== -1 && nextNl + 1 < text.length){
+    if(getLine(nextNl + 1).trim().length === 0) return true;
+  }
+  return false;
+}
+
 function syncCharState(){
   cutChars = cuts.map(px => pxToChar(px));
   activeBottomChar = pxToChar(activeBottomPx);
@@ -378,7 +396,28 @@ document.addEventListener('mousemove', e => {
 });
 
 document.addEventListener('mouseup', () => {
-  if(dragging){ dragging = null; document.body.style.cursor = ''; cancelAnimationFrame(autoRaf); }
+  if(!dragging) return;
+  cancelAnimationFrame(autoRaf);
+  const wasType = dragging.type;
+  const wasIdx  = dragging.idx;
+  const wasVal  = dragging.startVal;
+
+  if(wasType === 'cut'){
+    const charAtCut = pxToChar(cuts[wasIdx]);
+    if(!isOnBlankLine(charAtCut)){
+      cuts[wasIdx] = wasVal;
+      render(); updateStats();
+      toast('cut must be on a blank line');
+    }
+  } else if(wasType === 'active'){
+    if(!isOnBlankLine(activeBottomChar)){
+      activeBottomPx = wasVal;
+      render(); updateStats();
+    }
+  }
+
+  dragging = null;
+  document.body.style.cursor = '';
 });
 
 // ── LOCK CHUNK (called by Add Cut button) ──────────────────
@@ -390,6 +429,7 @@ function lockChunk(){
   }
   const lastCut = cuts.length ? cuts[cuts.length-1] : 0;
   if(activeBottomPx <= lastCut + 10){ toast('drag the handle down first'); return; }
+  if(!isOnBlankLine(activeBottomChar)){ toast('place the handle on a blank line to cut'); return; }
 
   cuts.push(activeBottomPx);
 
@@ -533,8 +573,9 @@ function updateToolbar(){
   const needsSplit = totalBytes > MAX_CHUNK_BYTES;
   const lastCut = cuts.length ? cuts[cuts.length-1] : 0;
   const hasActive = activeBottomPx > lastCut + 10;
+  const onBlank = isOnBlankLine(activeBottomChar);
   document.getElementById('btnUndo').disabled    = !cuts.length;
-  document.getElementById('btnAddCut').disabled  = !(has && hasActive && needsSplit);
+  document.getElementById('btnAddCut').disabled  = !(has && hasActive && needsSplit && onBlank);
   document.getElementById('btnCopy').disabled    = !cuts.length;
 
 }

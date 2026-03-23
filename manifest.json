@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Content Slicer",
   "version": "2.2",
-  "description": "Slice text into chunks — side panel for Fujitsu support workflow",
+  "description": "CECT Chuncking Tool",
   "permissions": [
     "sidePanel",
     "storage",
