@@ -42,12 +42,13 @@ header{
 
 /* TOOLBAR */
 .toolbar{
-  display:flex;align-items:center;gap:.6rem;
+  display:flex;flex-direction:column;gap:.5rem;
   padding:.7rem 2rem;
   border-bottom:2px solid var(--border);
   flex-shrink:0;background:var(--s1);
-  flex-wrap:wrap;
-  min-height:58px;
+}
+.toolbar-row{
+  display:flex;align-items:center;gap:.6rem;
 }
 .tbtn{
   font-family:'Segoe UI',Arial,sans-serif;
@@ -74,6 +75,13 @@ header{
   box-shadow:0 2px 6px rgba(15,85,153,.25);
 }
 .tbtn-copy:hover{background:#0a4070;border-color:#0a4070;box-shadow:0 3px 10px rgba(15,85,153,.35)}
+.tbtn-refresh{
+  border-color:#c0392b;color:#c0392b;
+  background:#fff5f5;
+  font-size:.82rem;padding:9px 22px;
+  margin-left:auto;
+}
+.tbtn-refresh:hover{background:#fde8e8;border-color:#a93226;color:#a93226}
 
 
 
@@ -242,9 +250,14 @@ textarea::placeholder{color:var(--faint)}
 </header>
 
 <div class="toolbar">
-  <button class="tbtn tbtn-undo" id="btnUndo" disabled>↩ Undo</button>
-  <button class="tbtn tbtn-addcut" id="btnAddCut" disabled>+ Add Cut</button>
-  <button class="tbtn tbtn-copy" id="btnCopy" disabled>⊕ View Chunks</button>
+  <div class="toolbar-row">
+    <button class="tbtn tbtn-undo" id="btnUndo" disabled>↩ Undo</button>
+    <button class="tbtn tbtn-addcut" id="btnAddCut" disabled>+ Add Cut</button>
+    <button class="tbtn tbtn-refresh" id="btnRefresh">⟳ Refresh</button>
+  </div>
+  <div class="toolbar-row">
+    <button class="tbtn tbtn-copy" id="btnCopy" disabled>⊕ View Chunks</button>
+  </div>
 </div>
 
 <div class="content-wrap">

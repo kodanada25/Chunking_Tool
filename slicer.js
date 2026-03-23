@@ -439,6 +439,22 @@ function fullReset(){
 
 
 
+// ── REFRESH (clear everything for new content) ─────────────
+document.getElementById('btnRefresh').addEventListener('click', () => {
+  hardReset();
+  text = '';
+  txtEl.value = '';
+  if(mirror){ mirror.textContent = ''; }
+  syncHeights();
+  scroller.scrollTop = 0;
+  tray.classList.remove('open');
+  if(typeof chrome !== 'undefined' && chrome.storage){
+    chrome.storage.local.remove('slicerSession');
+  }
+  updateStats(); updateToolbar();
+  toast('cleared — paste new content');
+});
+
 // ── UNDO (remove last cut) ─────────────────────────────────
 document.getElementById('btnUndo').addEventListener('click', () => {
   if(!cuts.length) return;
