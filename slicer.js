@@ -412,23 +412,28 @@ txtEl.addEventListener('input', () => {
   render(); updateStats(); updateToolbar();
 });
 
+let resizeRaf = null;
 new ResizeObserver(() => {
   if(!text || dragging) return;
-  syncHeights();
-  syncMirror();
-  const totalH = txtEl.scrollHeight;
-  cuts = cutChars.map(ch => {
-    if(ch >= text.length) return totalH;
-    return ch > 0 ? charToDocY(ch) : 0;
+  if(resizeRaf) cancelAnimationFrame(resizeRaf);
+  resizeRaf = requestAnimationFrame(() => {
+    resizeRaf = null;
+    syncHeights();
+    syncMirror();
+    const totalH = txtEl.scrollHeight;
+    cuts = cutChars.map(ch => {
+      if(ch >= text.length) return totalH;
+      return ch > 0 ? charToDocY(ch) : 0;
+    });
+    if(activeBottomChar >= text.length){
+      activeBottomPx = totalH;
+    } else if(activeBottomChar > 0){
+      activeBottomPx = charToDocY(activeBottomChar);
+    } else {
+      activeBottomPx = 0;
+    }
+    render();
   });
-  if(activeBottomChar >= text.length){
-    activeBottomPx = totalH;
-  } else if(activeBottomChar > 0){
-    activeBottomPx = charToDocY(activeBottomChar);
-  } else {
-    activeBottomPx = 0;
-  }
-  render();
 }).observe(txtEl);
 
 txtEl.addEventListener('paste', () => setTimeout(() => {
