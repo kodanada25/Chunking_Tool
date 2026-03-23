@@ -8,8 +8,7 @@
     "storage",
     "activeTab",
     "scripting",
-    "clipboardWrite",
-    "tabs"
+    "clipboardWrite"
   ],
   "side_panel": {
     "default_path": "sidepanel.html"

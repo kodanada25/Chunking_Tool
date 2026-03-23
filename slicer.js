@@ -554,19 +554,19 @@ function renderTray(){
   }).join('');
 }
 
-window.cpOne = i => {
+function cpOne(i){
   const segs = getTransformedSegments();
   if(!segs[i]) return;
   safeCopy(segs[i].transformed, 'chunk copied', () => {
     const card = document.getElementById('chunk-card-' + i);
     if(card) card.classList.add('copied');
   });
-};
+}
 
-window.closeCopied = i => {
+function closeCopied(i){
   const card = document.getElementById('chunk-card-' + i);
   if(card) card.classList.remove('copied');
-};
+}
 
 // ── SESSION SAVE/RESTORE via chrome.storage ─────────────────
 // Saves text + cut positions so state survives panel close/reopen
