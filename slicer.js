@@ -69,6 +69,8 @@ let cuts = [];            // locked cut positions in px (sorted ascending)
 let activeBottomPx = 0;   // where the current draggable blind ends
 let dragging = null;      // {type:'cut'|'active', idx?:number, startY, startVal, startScroll}
 let autoRaf = null;
+let cutChars = [];        // char indices corresponding to each cut (canonical state)
+let activeBottomChar = 0; // char index for active bottom (canonical state)
 
 const txtEl      = document.getElementById('txt');
 const scroller   = document.getElementById('scroller');
@@ -173,6 +175,11 @@ function bytesInRange(startPx, endPx){
     chars  : ce - cs,
     content: text.slice(cs, ce)
   };
+}
+
+function syncCharState(){
+  cutChars = cuts.map(px => pxToChar(px));
+  activeBottomChar = pxToChar(activeBottomPx);
 }
 
 // ── RENDER ─────────────────────────────────────────────────
@@ -291,6 +298,7 @@ function render(){
     overlay.appendChild(ah);
   }
 
+  syncCharState();
   updateStats();
   saveSession();
 }
@@ -404,6 +412,25 @@ txtEl.addEventListener('input', () => {
   render(); updateStats(); updateToolbar();
 });
 
+new ResizeObserver(() => {
+  if(!text || dragging) return;
+  syncHeights();
+  syncMirror();
+  const totalH = txtEl.scrollHeight;
+  cuts = cutChars.map(ch => {
+    if(ch >= text.length) return totalH;
+    return ch > 0 ? charToDocY(ch) : 0;
+  });
+  if(activeBottomChar >= text.length){
+    activeBottomPx = totalH;
+  } else if(activeBottomChar > 0){
+    activeBottomPx = charToDocY(activeBottomChar);
+  } else {
+    activeBottomPx = 0;
+  }
+  render();
+}).observe(txtEl);
+
 txtEl.addEventListener('paste', () => setTimeout(() => {
   text = txtEl.value;
   syncHeights();
@@ -417,7 +444,9 @@ txtEl.addEventListener('paste', () => setTimeout(() => {
 // ── RESET ──────────────────────────────────────────────────
 function hardReset(){
   cuts = [];
+  cutChars = [];
   activeBottomPx = 0;
+  activeBottomChar = 0;
   overlay.innerHTML = '';
 }
 
@@ -592,8 +621,8 @@ function saveSession(){
   chrome.storage.local.set({
     slicerSession: {
       text: text,
-      cuts: cuts,
-      activeBottomPx: activeBottomPx
+      cutChars: cutChars,
+      activeBottomChar: activeBottomChar
     }
   });
 }
@@ -603,14 +632,31 @@ function restoreSession(){
   chrome.storage.local.get('slicerSession', result => {
     const s = result.slicerSession;
     if(!s || !s.text) return;
-    // restore text
     txtEl.value = s.text;
     text = s.text;
     txtEl.dispatchEvent(new Event('input'));
-    // after render, restore cuts
     setTimeout(() => {
-      cuts = s.cuts || [];
-      activeBottomPx = s.activeBottomPx || 0;
+      syncHeights();
+      syncMirror();
+      const totalH = txtEl.scrollHeight;
+      if(s.cutChars && s.cutChars.length){
+        cutChars = s.cutChars;
+        activeBottomChar = s.activeBottomChar || 0;
+        cuts = cutChars.map(ch => {
+          if(ch >= text.length) return totalH;
+          return ch > 0 ? charToDocY(ch) : 0;
+        });
+        if(activeBottomChar >= text.length){
+          activeBottomPx = totalH;
+        } else if(activeBottomChar > 0){
+          activeBottomPx = charToDocY(activeBottomChar);
+        } else {
+          activeBottomPx = 0;
+        }
+      } else {
+        cuts = s.cuts || [];
+        activeBottomPx = s.activeBottomPx || 0;
+      }
       if(!activeBottomPx && text){
         activeBottomPx = pxForBytes(0, DEFAULT_BYTES);
       }
