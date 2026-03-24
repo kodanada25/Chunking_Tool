@@ -1,8 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "Content Slicer",
+  "name": "CECT-C Chunking Tool",
   "version": "2.2",
-  "description": "CECT Chuncking Tool",
+  "description": "CECT-C Chunking Tool.",
+  "author": "Ritwiz Mulay",
   "permissions": [
     "sidePanel",
     "storage",
