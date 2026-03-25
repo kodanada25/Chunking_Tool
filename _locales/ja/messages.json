@@ -1,0 +1,89 @@
+{
+  "extensionName": {
+    "message": "CECT-C Chunking Tool"
+  },
+  "extensionDescription": {
+    "message": "CECT-C Chunking Tool."
+  },
+  "actionTitle": {
+    "message": "コンテンツスライサーを開く"
+  },
+  "copyFailed": {
+    "message": "コピー失敗 — テキストを手動で選択してください"
+  },
+  "triggerLine": {
+    "message": "お問い合わせいただいた内容について、以下の通りご報告いたします。"
+  },
+  "replacementBase": {
+    "message": "お問い合わせいただいた内容について以下の通りご報告いたします。"
+  },
+  "reportIntro": {
+    "message": "「ケースコメント」の入力文字数制限により、回答は$COUNT$つに分けてご報告させて頂きます。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reportHeader": {
+    "message": "【ご報告$NUM$】",
+    "placeholders": {
+      "num": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "sessionRestored": {
+    "message": "前回のセッションを復元しました"
+  },
+  "sessionExpired": {
+    "message": "セッションの有効期限が切れました — データをクリアしました"
+  },
+  "cutOnBlankLine": {
+    "message": "カット位置は空白行にしてください"
+  },
+  "contentUnder4kb": {
+    "message": "4 KB以下のため分割不要です"
+  },
+  "dragHandleDown": {
+    "message": "まずハンドルを下にドラッグしてください"
+  },
+  "placeOnBlankLine": {
+    "message": "空白行にハンドルを配置してカットしてください"
+  },
+  "allSliced": {
+    "message": "すべてのコンテンツをスライスしました ✓"
+  },
+  "chunkAdded": {
+    "message": "チャンク$NUM$を追加しました ✓",
+    "placeholders": {
+      "num": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "resetDone": {
+    "message": "リセット"
+  },
+  "clearedPasteNew": {
+    "message": "クリアしました — 新しいコンテンツを貼り付けてください"
+  },
+  "lastCutRemoved": {
+    "message": "最後のカットを削除しました"
+  },
+  "allChunksCopied": {
+    "message": "全チャンクをコピーしました！"
+  },
+  "noChunks": {
+    "message": "チャンクがありません"
+  },
+  "noChunksYet": {
+    "message": "チャンクがまだありません"
+  },
+  "chunkCopied": {
+    "message": "チャンクをコピーしました"
+  }
+}

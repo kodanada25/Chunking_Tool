@@ -1,10 +1,19 @@
 document.addEventListener('DOMContentLoaded', () => {
 
+// ── i18n HELPER ─────────────────────────────────────────────
+function msg(key, subs){
+  if(typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage){
+    const m = chrome.i18n.getMessage(key, subs);
+    if(m) return m;
+  }
+  return key;
+}
+
 // ── TOAST ───────────────────────────────────────────────────
-function toast(msg){
-  const el = document.getElementById('toast');
-  el.textContent = msg; el.classList.add('on');
-  setTimeout(() => el.classList.remove('on'), 2200);
+function toast(message){
+  const t = document.getElementById('toast');
+  t.textContent = message; t.classList.add('on');
+  setTimeout(() => t.classList.remove('on'), 2200);
 }
 
 // ── SAFE CLIPBOARD (works in Chrome extension side panel) ───
@@ -14,7 +23,7 @@ function safeCopy(str, toastMsg, callback){
     if(callback) callback();
   }
   function onFail(){
-    toast('コピー失敗 — テキストを手動で選択してください');
+    toast(msg('copyFailed'));
   }
 
   // Method 1: Clipboard API (needs focus + user activation)
@@ -36,7 +45,7 @@ function execCopyFallback(str, onSuccess, onFail){
   ta.select();
   ta.setSelectionRange(0, str.length);
   let ok = false;
-  try { ok = document.execCommand('copy'); } catch(e){ /* ignore */ }
+  try { ok = document.execCommand('copy'); } catch(e){ console.warn('execCommand copy failed:', e); }
   document.body.removeChild(ta);
   if(ok) onSuccess(); else onFail();
 }
@@ -51,11 +60,22 @@ const COLORS = [
 const rgba = (i,a) => `rgba(${COLORS[i%COLORS.length].join(',')},${a})`;
 const rgb  = (i)   => `rgb(${COLORS[i%COLORS.length].join(',')})`;
 
-function fmtB(n){
-  if(!n) return '0 B';
-  if(n < 1024) return n + ' B';
-  if(n < 1048576) return (n/1024).toFixed(n>=10240?1:2) + ' KB';
-  return (n/1048576).toFixed(2) + ' MB';
+const fmtB = SlicerCore.fmtB;
+
+function el(tag, attrs) {
+  const n = document.createElement(tag);
+  if (attrs) for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'className') n.className = v;
+    else if (k === 'cssText') n.style.cssText = v;
+    else if (k === 'id') n.id = v;
+    else n.setAttribute(k, v);
+  }
+  for (let i = 2; i < arguments.length; i++) {
+    const c = arguments[i];
+    if (typeof c === 'string') n.append(c);
+    else if (c) n.appendChild(c);
+  }
+  return n;
 }
 
 // ── STATE ──────────────────────────────────────────────────
@@ -72,6 +92,9 @@ let autoRaf = null;
 let cutChars = [];        // char indices corresponding to each cut (canonical / source-of-truth)
 let activeBottomChar = 0; // char index for active bottom (canonical / source-of-truth)
 let _resizing = false;    // true while ResizeObserver handler runs (prevents char state corruption)
+let _autoClearTimer = null;
+
+const SESSION_MAX_AGE_MS = 2 * 60 * 60 * 1000; // 2 hours
 
 const txtEl      = document.getElementById('txt');
 const scroller   = document.getElementById('scroller');
@@ -185,22 +208,11 @@ function bytesInRange(startPx, endPx){
 }
 
 function getLine(charIdx){
-  let s = charIdx;
-  while(s > 0 && text[s - 1] !== '\n') s--;
-  let e = charIdx;
-  while(e < text.length && text[e] !== '\n') e++;
-  return text.slice(s, e);
+  return SlicerCore.getLine(charIdx, text);
 }
 
 function isOnBlankLine(charIdx){
-  if(!text.length || charIdx < 0) return false;
-  if(charIdx >= text.length) return true;
-  if(getLine(charIdx).trim().length === 0) return true;
-  const nextNl = text.indexOf('\n', charIdx);
-  if(nextNl !== -1 && nextNl + 1 < text.length){
-    if(getLine(nextNl + 1).trim().length === 0) return true;
-  }
-  return false;
+  return SlicerCore.isOnBlankLine(charIdx, text);
 }
 
 function syncCharState(){
@@ -210,7 +222,7 @@ function syncCharState(){
 
 // ── RENDER ─────────────────────────────────────────────────
 function render(){
-  overlay.innerHTML = '';
+  overlay.replaceChildren();
   if(!text) return;
 
   if(!_resizing){
@@ -232,17 +244,17 @@ function render(){
     const bytes = ENC.encode(text.slice(startCh, endCh)).length;
     const chars = endCh - startCh;
 
-    const band = document.createElement('div');
-    band.className = 'seg-band';
-    band.style.cssText = `top:${startPx}px;height:${endPx-startPx}px;`;
-    band.innerHTML = `
-      <div class="seg-fill" style="background:${rgba(i,.38)}"></div>
-      <div class="seg-badge">
-        <div class="seg-swatch" style="background:${rgb(i)}"></div>
-        <span class="seg-kb">${fmtB(bytes)}</span>
-        <span class="seg-meta">#${i+1} · ${chars.toLocaleString()} chars</span>
-      </div>
-      <div class="seg-size-corner">${fmtB(bytes)}<span class="seg-size-corner-sub">${chars.toLocaleString()} chars</span></div>`;
+    const band = el('div', {className:'seg-band', cssText:`top:${startPx}px;height:${endPx-startPx}px`},
+      el('div', {className:'seg-fill', cssText:`background:${rgba(i,.38)}`}),
+      el('div', {className:'seg-badge'},
+        el('div', {className:'seg-swatch', cssText:`background:${rgb(i)}`}),
+        el('span', {className:'seg-kb'}, fmtB(bytes)),
+        el('span', {className:'seg-meta'}, `#${i+1} \u00b7 ${chars.toLocaleString()} chars`)
+      ),
+      el('div', {className:'seg-size-corner'}, fmtB(bytes),
+        el('span', {className:'seg-size-corner-sub'}, `${chars.toLocaleString()} chars`)
+      )
+    );
     overlay.appendChild(band);
   });
 
@@ -258,35 +270,43 @@ function render(){
     const nearLimit = bytes >= MAX_CHUNK_BYTES * 0.9;
     const badgeColor = atLimit ? '#c0392b' : nearLimit ? '#c05a00' : '#0F5599';
     const limitLabel = atLimit ? ' · MAX' : nearLimit ? ' · near max' : '';
-    const activeBand = document.createElement('div');
-    activeBand.className = 'seg-band';
-    activeBand.style.cssText = `top:${activeTop}px;height:${activeBot-activeTop}px;`;
-    activeBand.innerHTML = `
-      <div class="seg-fill" style="background:${rgba(ci,.42)}"></div>
-      <div class="seg-badge" style="border-color:rgba(${atLimit?'192,57,43':'15,85,153'},.3)">
-        <div class="seg-swatch" style="background:${rgb(ci)}"></div>
-        <span class="seg-kb" style="color:${badgeColor}">${fmtB(bytes)}${limitLabel}</span>
-        <span class="seg-meta">#${ci+1} · ${chars.toLocaleString()} chars</span>
-      </div>
-      <div class="seg-size-corner" style="color:${badgeColor}">${fmtB(bytes)}<span class="seg-size-corner-sub">${chars.toLocaleString()} chars</span></div>`;
+    const activeBand = el('div', {className:'seg-band', cssText:`top:${activeTop}px;height:${activeBot-activeTop}px`},
+      el('div', {className:'seg-fill', cssText:`background:${rgba(ci,.42)}`}),
+      el('div', {className:'seg-badge', cssText:`border-color:rgba(${atLimit?'192,57,43':'15,85,153'},.3)`},
+        el('div', {className:'seg-swatch', cssText:`background:${rgb(ci)}`}),
+        el('span', {className:'seg-kb', cssText:`color:${badgeColor}`}, fmtB(bytes) + limitLabel),
+        el('span', {className:'seg-meta'}, `#${ci+1} \u00b7 ${chars.toLocaleString()} chars`)
+      ),
+      el('div', {className:'seg-size-corner', cssText:`color:${badgeColor}`}, fmtB(bytes),
+        el('span', {className:'seg-size-corner-sub'}, `${chars.toLocaleString()} chars`)
+      )
+    );
     overlay.appendChild(activeBand);
   }
 
   // ── Draw locked cut handles (all draggable, any can be resized)
   cuts.forEach((cutPx, idx) => {
-    const h = document.createElement('div');
-    h.className = 'cut-handle';
-    h.style.top = cutPx + 'px';
     const prevCh = idx > 0 ? cutChars[idx-1] : 0;
     const prevBytes = ENC.encode(text.slice(prevCh, cutChars[idx])).length;
-    h.innerHTML = `
-      <div class="cut-line"></div>
-      <div class="cut-pill"></div>
-      <span class="cut-tooltip">${fmtB(prevBytes)} from start of chunk</span>
-      <button class="cut-del">✕</button>`;
+    const delBtn = el('button', {className:'cut-del', 'aria-label':`Delete cut ${idx+1}`}, '\u2715');
+    const h = el('div', {
+      className:'cut-handle',
+      cssText:`top:${cutPx}px`,
+      role:'slider',
+      'aria-label':`Cut handle ${idx+1}`,
+      'aria-roledescription':'cut position handle',
+      'aria-valuenow':String(Math.round(cutPx)),
+      'aria-valuemin':'0',
+      'aria-valuemax':String(Math.round(totalH)),
+      tabindex:'0'
+    },
+      el('div', {className:'cut-line'}),
+      el('div', {className:'cut-pill'}),
+      el('span', {className:'cut-tooltip'}, `${fmtB(prevBytes)} from start of chunk`),
+      delBtn
+    );
 
-    // delete cut
-    h.querySelector('.cut-del').addEventListener('click', e => {
+    delBtn.addEventListener('click', e => {
       e.stopPropagation();
       cuts.splice(idx, 1);
       render(); updateStats();
@@ -305,17 +325,48 @@ function render(){
       document.body.style.cursor = 'ns-resize';
     });
 
+    // keyboard repositioning for cut handles
+    h.addEventListener('keydown', e => {
+      const STEP = 20;
+      const BIG_STEP = 100;
+      let delta = 0;
+      if(e.key === 'ArrowDown') delta = STEP;
+      else if(e.key === 'ArrowUp') delta = -STEP;
+      else if(e.key === 'PageDown') delta = BIG_STEP;
+      else if(e.key === 'PageUp') delta = -BIG_STEP;
+      else if(e.key === 'Delete' || e.key === 'Backspace'){ delBtn.click(); return; }
+      else return;
+      e.preventDefault();
+      const prevCut = idx > 0 ? cuts[idx-1] : 0;
+      const nextCut = idx < cuts.length-1 ? cuts[idx+1] : activeBottomPx;
+      const maxFromPrev = pxForBytes(prevCut, MAX_CHUNK_BYTES);
+      const proposed = Math.max(prevCut + 20, Math.min(Math.min(nextCut - 20, maxFromPrev), cuts[idx] + delta));
+      const charAtCut = pxToChar(proposed);
+      if(isOnBlankLine(charAtCut)){
+        cuts[idx] = proposed;
+        render(); updateStats();
+      }
+    });
+
     overlay.appendChild(h);
   });
 
   // ── Draw active bottom handle (drag to extend active blind)
   if(activeBottomPx < totalH){
-    const ah = document.createElement('div');
-    ah.className = 'active-handle';
-    ah.style.top = activeBottomPx + 'px';
-    ah.innerHTML = `
-      <div class="active-line"></div>
-      <div class="active-pill"></div>`;
+    const ah = el('div', {
+      className:'active-handle',
+      cssText:`top:${activeBottomPx}px`,
+      role:'slider',
+      'aria-label':'Active chunk handle',
+      'aria-roledescription':'chunk size handle',
+      'aria-valuenow':String(Math.round(activeBottomPx)),
+      'aria-valuemin':'0',
+      'aria-valuemax':String(Math.round(totalH)),
+      tabindex:'0'
+    },
+      el('div', {className:'active-line'}),
+      el('div', {className:'active-pill'})
+    );
 
     ah.addEventListener('mousedown', e => {
       e.preventDefault(); e.stopPropagation();
@@ -326,6 +377,23 @@ function render(){
         startScroll: scroller.scrollTop
       };
       document.body.style.cursor = 'ns-resize';
+    });
+
+    // keyboard repositioning for active handle
+    ah.addEventListener('keydown', e => {
+      const STEP = 20;
+      const BIG_STEP = 100;
+      let delta = 0;
+      if(e.key === 'ArrowDown') delta = STEP;
+      else if(e.key === 'ArrowUp') delta = -STEP;
+      else if(e.key === 'PageDown') delta = BIG_STEP;
+      else if(e.key === 'PageUp') delta = -BIG_STEP;
+      else return;
+      e.preventDefault();
+      const lastCut = cuts.length ? cuts[cuts.length-1] : 0;
+      const maxBottom = pxForBytes(lastCut, MAX_CHUNK_BYTES);
+      activeBottomPx = Math.max(lastCut + 20, Math.min(Math.min(totalH, maxBottom), activeBottomPx + delta));
+      render(); updateStats();
     });
 
     overlay.appendChild(ah);
@@ -408,7 +476,7 @@ document.addEventListener('mouseup', () => {
     if(!isOnBlankLine(charAtCut)){
       cuts[wasIdx] = wasVal;
       render(); updateStats();
-      toast('cut must be on a blank line');
+      toast(msg('cutOnBlankLine'));
     }
   } else if(wasType === 'active'){
     if(!isOnBlankLine(activeBottomChar)){
@@ -425,12 +493,12 @@ document.addEventListener('mouseup', () => {
 function lockChunk(){
   if(!text) return;
   if(ENC.encode(text).length <= MAX_CHUNK_BYTES){
-    toast('content is under 4 KB — no need to split');
+    toast(msg('contentUnder4kb'));
     return;
   }
   const lastCut = cuts.length ? cuts[cuts.length-1] : 0;
-  if(activeBottomPx <= lastCut + 10){ toast('drag the handle down first'); return; }
-  if(!isOnBlankLine(activeBottomChar)){ toast('place the handle on a blank line to cut'); return; }
+  if(activeBottomPx <= lastCut + 10){ toast(msg('dragHandleDown')); return; }
+  if(!isOnBlankLine(activeBottomChar)){ toast(msg('placeOnBlankLine')); return; }
 
   cuts.push(activeBottomPx);
 
@@ -438,7 +506,7 @@ function lockChunk(){
   if(activeBottomPx >= totalH - 10){
     activeBottomPx = totalH;
     render(); updateStats();
-    toast('all content sliced ✓');
+    toast(msg('allSliced'));
   } else {
     const newBottom = Math.min(pxForBytes(activeBottomPx, DEFAULT_BYTES), pxForBytes(activeBottomPx, MAX_CHUNK_BYTES));
     activeBottomPx = newBottom;
@@ -447,7 +515,7 @@ function lockChunk(){
     const bandMid = cuts[cuts.length-1] + (activeBottomPx - cuts[cuts.length-1]) / 2;
     const scrollerH = scroller.getBoundingClientRect().height;
     scroller.scrollTop = Math.max(0, bandMid - scrollerH / 2);
-    toast(`chunk ${cuts.length} added ✓`);
+    toast(msg('chunkAdded', [String(cuts.length)]));
   }
   updateToolbar();
 }
@@ -508,7 +576,7 @@ function hardReset(){
   cutChars = [];
   activeBottomPx = 0;
   activeBottomChar = 0;
-  overlay.innerHTML = '';
+  overlay.replaceChildren();
 }
 
 function fullReset(){
@@ -522,7 +590,7 @@ function fullReset(){
     syncMirror();
     activeBottomPx = pxForBytes(0, DEFAULT_BYTES);
     render(); updateStats(); updateToolbar();
-    toast('reset');
+    toast(msg('resetDone'));
   }));
 }
 
@@ -542,7 +610,7 @@ document.getElementById('btnRefresh').addEventListener('click', () => {
     chrome.storage.local.remove('slicerSession');
   }
   updateStats(); updateToolbar();
-  toast('cleared — paste new content');
+  toast(msg('clearedPasteNew'));
 });
 
 // ── UNDO (remove last cut) ─────────────────────────────────
@@ -554,7 +622,7 @@ document.getElementById('btnUndo').addEventListener('click', () => {
   const scrollerH = scroller.getBoundingClientRect().height;
   scroller.scrollTop = Math.max(0, restored - scrollerH * 0.6);
   render(); updateStats(); updateToolbar();
-  toast('last cut removed');
+  toast(msg('lastCutRemoved'));
 });
 
 // ── STATS + TOOLBAR ────────────────────────────────────────
@@ -582,27 +650,17 @@ function updateToolbar(){
 }
 
 // ── VIEW CHUNKS TRAY ───────────────────────────────────────
-// Build segments from cuts for display
 // ── TRANSFORM: replace greeting line + add chunk headers ───
-const TRIGGER = 'お問い合わせいただいた内容について、以下の通りご報告いたします。';
-const REPLACEMENT_BASE = 'お問い合わせいただいた内容について以下の通りご報告いたします。';
 
 function transformContent(rawContent, chunkIndex, totalChunks){
-  let content = rawContent;
-  const n = chunkIndex + 1; // 1-based
-
-  if(n === 1 && content.includes(TRIGGER)){
-    // Replace trigger line in first chunk + add intro + header
-    const intro = `${REPLACEMENT_BASE}\n「ケースコメント」の入力文字数制限により、回答は${totalChunks}つに分けてご報告させて頂きます。\n【ご報告1】\n`;
-    content = content.replace(TRIGGER, intro);
-  } else {
-    // Every other chunk starts with the report header
-    content = `【ご報告${n}】\n` + content;
-  }
-  return content;
+  return SlicerCore.transformContent(rawContent, chunkIndex, totalChunks, {
+    trigger: msg('triggerLine'),
+    replacementBase: msg('replacementBase'),
+    formatReportIntro: (count) => msg('reportIntro', [String(count)]),
+    formatReportHeader: (n) => msg('reportHeader', [String(n)])
+  });
 }
 
-// Build transformed segments for copy/export
 function getTransformedSegments(){
   const segs = getSegments();
   const total = segs.length;
@@ -613,30 +671,51 @@ function getTransformedSegments(){
 }
 
 function getSegments(){
-  const charBorders = [0, ...cutChars];
-  const lastCutCh = cutChars.length ? cutChars[cutChars.length-1] : 0;
-  if(activeBottomChar > lastCutCh) charBorders.push(activeBottomChar);
-  return charBorders.slice(0,-1).map((startCh, i) => {
-    const endCh = charBorders[i+1];
-    const content = text.slice(startCh, endCh);
-    return {
-      bytes: ENC.encode(content).length,
-      chars: endCh - startCh,
-      content,
-      colorIdx: i
-    };
-  }).filter(s => s.chars > 0);
+  return SlicerCore.getSegments(text, cutChars, activeBottomChar, ENC);
 }
 
 const tray = document.getElementById('tray');
-document.getElementById('btnCopy').addEventListener('click', () => {
-  renderTray(); tray.classList.toggle('open');
+const btnCopy = document.getElementById('btnCopy');
+
+btnCopy.addEventListener('click', () => {
+  renderTray();
+  tray.classList.toggle('open');
+  if(tray.classList.contains('open')){
+    const firstFocusable = tray.querySelector('button, [tabindex]:not([tabindex="-1"])');
+    if(firstFocusable) firstFocusable.focus();
+  }
 });
-document.getElementById('trayClose').onclick = () => tray.classList.remove('open');
+
+document.getElementById('trayClose').onclick = () => {
+  tray.classList.remove('open');
+  btnCopy.focus();
+};
+
+// Focus trap + Escape to close
+tray.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    tray.classList.remove('open');
+    btnCopy.focus();
+    return;
+  }
+  if(e.key !== 'Tab') return;
+  const focusables = tray.querySelectorAll('button, [tabindex]:not([tabindex="-1"])');
+  if(!focusables.length) return;
+  const first = focusables[0];
+  const last = focusables[focusables.length - 1];
+  if(e.shiftKey && document.activeElement === first){
+    e.preventDefault();
+    last.focus();
+  } else if(!e.shiftKey && document.activeElement === last){
+    e.preventDefault();
+    first.focus();
+  }
+});
+
 document.getElementById('trayCopyAll').onclick = () => {
   const segs = getTransformedSegments();
-  if(!segs.length){ toast('no chunks'); return; }
-  safeCopy(segs.map(s => s.transformed).join('\n\n'), 'all chunks copied!');
+  if(!segs.length){ toast(msg('noChunks')); return; }
+  safeCopy(segs.map(s => s.transformed).join('\n\n'), msg('allChunksCopied'));
 };
 
 function renderTray(){
@@ -644,30 +723,39 @@ function renderTray(){
   document.getElementById('trayTitle').textContent = `${segs.length} chunk${segs.length===1?'':'s'}`;
   const scroll = document.getElementById('trayScroll');
   if(!segs.length){
-    scroll.innerHTML = `<div style="padding:2rem;text-align:center;font-family:'Courier New',Courier,monospace;font-size:.65rem;color:var(--faint)">no chunks yet</div>`;
+    scroll.replaceChildren(el('div', {className:'tray-empty'}, msg('noChunksYet')));
     return;
   }
-  scroll.innerHTML = segs.map((seg, i) => {
+  scroll.replaceChildren();
+  segs.forEach((seg, i) => {
     const c = rgb(seg.colorIdx);
-    const preview = seg.transformed.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-    return `<div class="chunk-card" id="chunk-card-${i}">
-      <div class="chunk-copied-badge"><span class="chunk-copied-label">✓ copied <button class="chunk-copied-close" data-close="${i}">✕ close</button></span></div>
-      <div class="chunk-stripe" style="background:${c}"></div>
-      <div class="chunk-info">
-        <div class="chunk-n">chunk ${String(i+1).padStart(2,'0')}</div>
-        <div class="chunk-kb">${fmtB(seg.bytes)}</div>
-        <div class="chunk-ch">${seg.chars.toLocaleString()} chars</div>
-      </div>
-      <div class="chunk-body" data-expand="1">${preview}</div>
-      <button class="chunk-cp" data-cpone="${i}">copy</button>
-    </div>`;
-  }).join('');
+    const body = el('div', {className:'chunk-body', 'data-expand':'1'});
+    body.textContent = seg.transformed;
+    scroll.appendChild(
+      el('div', {className:'chunk-card', id:`chunk-card-${i}`, role:'listitem'},
+        el('div', {className:'chunk-copied-badge'},
+          el('span', {className:'chunk-copied-label'},
+            '\u2713 copied ',
+            el('button', {className:'chunk-copied-close', 'data-close':String(i)}, '\u2715 close')
+          )
+        ),
+        el('div', {className:'chunk-stripe', cssText:`background:${c}`}),
+        el('div', {className:'chunk-info'},
+          el('div', {className:'chunk-n'}, `chunk ${String(i+1).padStart(2,'0')}`),
+          el('div', {className:'chunk-kb'}, fmtB(seg.bytes)),
+          el('div', {className:'chunk-ch'}, `${seg.chars.toLocaleString()} chars`)
+        ),
+        body,
+        el('button', {className:'chunk-cp', 'data-cpone':String(i)}, 'copy')
+      )
+    );
+  });
 }
 
 function cpOne(i){
   const segs = getTransformedSegments();
   if(!segs[i]) return;
-  safeCopy(segs[i].transformed, 'chunk copied', () => {
+  safeCopy(segs[i].transformed, msg('chunkCopied'), () => {
     const card = document.getElementById('chunk-card-' + i);
     if(card) card.classList.add('copied');
   });
@@ -679,7 +767,6 @@ function closeCopied(i){
 }
 
 // ── SESSION SAVE/RESTORE via chrome.storage ─────────────────
-// Saves text + cut positions so state survives panel close/reopen
 
 function saveSession(){
   if(typeof chrome === 'undefined' || !chrome.storage) return;
@@ -687,47 +774,115 @@ function saveSession(){
     slicerSession: {
       text: text,
       cutChars: cutChars,
-      activeBottomChar: activeBottomChar
+      activeBottomChar: activeBottomChar,
+      savedAt: Date.now()
+    }
+  }, () => {
+    if(chrome.runtime.lastError){
+      console.warn('saveSession failed:', chrome.runtime.lastError.message);
     }
   });
+  scheduleAutoClear();
+}
+
+function scheduleAutoClear(){
+  if(_autoClearTimer) clearTimeout(_autoClearTimer);
+  _autoClearTimer = setTimeout(() => {
+    if(typeof chrome !== 'undefined' && chrome.storage){
+      chrome.storage.local.remove('slicerSession');
+    }
+    hardReset();
+    text = '';
+    txtEl.value = '';
+    if(mirror) mirror.textContent = '';
+    syncHeights();
+    updateStats(); updateToolbar();
+    toast(msg('sessionExpired'));
+  }, SESSION_MAX_AGE_MS);
+}
+
+function validateSessionData(s){
+  if(!s || typeof s !== 'object' || typeof s.text !== 'string' || !s.text) return null;
+  const clean = { text: s.text };
+
+  if(Array.isArray(s.cutChars)){
+    clean.cutChars = s.cutChars.filter(v =>
+      typeof v === 'number' && Number.isFinite(v) && v >= 0 && v <= s.text.length
+    );
+  } else {
+    clean.cutChars = [];
+  }
+
+  if(typeof s.activeBottomChar === 'number' && Number.isFinite(s.activeBottomChar)
+     && s.activeBottomChar >= 0 && s.activeBottomChar <= s.text.length){
+    clean.activeBottomChar = s.activeBottomChar;
+  } else {
+    clean.activeBottomChar = 0;
+  }
+
+  clean.savedAt = typeof s.savedAt === 'number' ? s.savedAt : 0;
+  return clean;
 }
 
 function restoreSession(){
   if(typeof chrome === 'undefined' || !chrome.storage) return;
   chrome.storage.local.get('slicerSession', result => {
-    const s = result.slicerSession;
-    if(!s || !s.text) return;
-    txtEl.value = s.text;
-    text = s.text;
-    txtEl.dispatchEvent(new Event('input'));
-    setTimeout(() => {
-      syncHeights();
-      syncMirror();
-      const totalH = txtEl.scrollHeight;
-      if(s.cutChars && s.cutChars.length){
-        cutChars = s.cutChars;
-        activeBottomChar = s.activeBottomChar || 0;
-        cuts = cutChars.map(ch => {
-          if(ch >= text.length) return totalH;
-          return ch > 0 ? charToDocY(ch) : 0;
-        });
-        if(activeBottomChar >= text.length){
-          activeBottomPx = totalH;
-        } else if(activeBottomChar > 0){
-          activeBottomPx = charToDocY(activeBottomChar);
-        } else {
-          activeBottomPx = 0;
+    try {
+      const raw = result.slicerSession;
+      const s = validateSessionData(raw);
+      if(!s) return;
+
+      // Auto-clear: discard sessions older than 2 hours
+      if(s.savedAt && Date.now() - s.savedAt > SESSION_MAX_AGE_MS){
+        chrome.storage.local.remove('slicerSession');
+        toast(msg('sessionExpired'));
+        return;
+      }
+
+      txtEl.value = s.text;
+      text = s.text;
+      txtEl.dispatchEvent(new Event('input'));
+
+      setTimeout(() => {
+        try {
+          syncHeights();
+          syncMirror();
+          const totalH = txtEl.scrollHeight;
+
+          if(s.cutChars.length){
+            cutChars = s.cutChars;
+            activeBottomChar = s.activeBottomChar;
+            cuts = cutChars.map(ch => {
+              if(ch >= text.length) return totalH;
+              return ch > 0 ? charToDocY(ch) : 0;
+            });
+            if(activeBottomChar >= text.length){
+              activeBottomPx = totalH;
+            } else if(activeBottomChar > 0){
+              activeBottomPx = charToDocY(activeBottomChar);
+            } else {
+              activeBottomPx = 0;
+            }
+          } else {
+            cuts = [];
+            activeBottomPx = 0;
+          }
+
+          if(!activeBottomPx && text){
+            activeBottomPx = pxForBytes(0, DEFAULT_BYTES);
+          }
+
+          render(); updateStats(); updateToolbar();
+          toast(msg('sessionRestored'));
+          scheduleAutoClear();
+        } catch(innerErr){
+          console.error('restoreSession (inner):', innerErr);
+          hardReset();
         }
-      } else {
-        cuts = s.cuts || [];
-        activeBottomPx = s.activeBottomPx || 0;
-      }
-      if(!activeBottomPx && text){
-        activeBottomPx = pxForBytes(0, DEFAULT_BYTES);
-      }
-      render(); updateStats(); updateToolbar();
-      toast('前回のセッションを復元しました');
-    }, 100);
+      }, 100);
+    } catch(err){
+      console.error('restoreSession:', err);
+    }
   });
 }
 

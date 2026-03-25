@@ -1,0 +1,89 @@
+{
+  "extensionName": {
+    "message": "CECT-C Chunking Tool"
+  },
+  "extensionDescription": {
+    "message": "CECT-C Chunking Tool."
+  },
+  "actionTitle": {
+    "message": "Open Content Slicer"
+  },
+  "copyFailed": {
+    "message": "Copy failed — please select text manually"
+  },
+  "triggerLine": {
+    "message": "お問い合わせいただいた内容について、以下の通りご報告いたします。"
+  },
+  "replacementBase": {
+    "message": "お問い合わせいただいた内容について以下の通りご報告いたします。"
+  },
+  "reportIntro": {
+    "message": "「ケースコメント」の入力文字数制限により、回答は$COUNT$つに分けてご報告させて頂きます。",
+    "placeholders": {
+      "count": {
+        "content": "$1",
+        "example": "3"
+      }
+    }
+  },
+  "reportHeader": {
+    "message": "【ご報告$NUM$】",
+    "placeholders": {
+      "num": {
+        "content": "$1",
+        "example": "1"
+      }
+    }
+  },
+  "sessionRestored": {
+    "message": "Previous session restored"
+  },
+  "sessionExpired": {
+    "message": "Session expired — data cleared"
+  },
+  "cutOnBlankLine": {
+    "message": "cut must be on a blank line"
+  },
+  "contentUnder4kb": {
+    "message": "content is under 4 KB — no need to split"
+  },
+  "dragHandleDown": {
+    "message": "drag the handle down first"
+  },
+  "placeOnBlankLine": {
+    "message": "place the handle on a blank line to cut"
+  },
+  "allSliced": {
+    "message": "all content sliced ✓"
+  },
+  "chunkAdded": {
+    "message": "chunk $NUM$ added ✓",
+    "placeholders": {
+      "num": {
+        "content": "$1",
+        "example": "2"
+      }
+    }
+  },
+  "resetDone": {
+    "message": "reset"
+  },
+  "clearedPasteNew": {
+    "message": "cleared — paste new content"
+  },
+  "lastCutRemoved": {
+    "message": "last cut removed"
+  },
+  "allChunksCopied": {
+    "message": "all chunks copied!"
+  },
+  "noChunks": {
+    "message": "no chunks"
+  },
+  "noChunksYet": {
+    "message": "no chunks yet"
+  },
+  "chunkCopied": {
+    "message": "chunk copied"
+  }
+}

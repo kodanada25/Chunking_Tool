@@ -1,16 +1,18 @@
 {
   "manifest_version": 3,
-  "name": "CECT-C Chunking Tool",
-  "version": "2.2",
-  "description": "CECT-C Chunking Tool.",
+  "name": "__MSG_extensionName__",
+  "version": "2.3",
+  "description": "__MSG_extensionDescription__",
+  "default_locale": "en",
   "author": "Ritwiz Mulay",
   "permissions": [
     "sidePanel",
     "storage",
-    "activeTab",
-    "scripting",
     "clipboardWrite"
   ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'none'; style-src 'self'"
+  },
   "side_panel": {
     "default_path": "sidepanel.html"
   },
@@ -18,7 +20,7 @@
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Open Content Slicer"
+    "default_title": "__MSG_actionTitle__"
   },
   "icons": {
     "16":  "icon16.png",
