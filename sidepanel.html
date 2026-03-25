@@ -9,44 +9,44 @@
 <body>
 
 <header>
-  <div class="brand"><div class="dot"></div>content slicer</div>
+  <div class="brand"><div class="dot"></div><span data-i18n="uiBrandName">content slicer</span></div>
   <div class="hstats">
-    <span><b id="hs-size">0 B</b>total</span>
-    <span><b id="hs-segs">0</b>chunks</span>
-    <span><b id="hs-remain">—</b>remaining</span>
+    <span><b id="hs-size">0 B</b><span data-i18n="uiStatTotal">total</span></span>
+    <span><b id="hs-segs">0</b><span data-i18n="uiStatChunks">chunks</span></span>
+    <span><b id="hs-remain">—</b><span data-i18n="uiStatRemaining">remaining</span></span>
   </div>
 </header>
 
-<div class="toolbar" role="toolbar" aria-label="Slicer controls">
+<div class="toolbar" role="toolbar" data-i18n-aria="ariaSlicerControls" aria-label="Slicer controls">
   <div class="toolbar-row">
-    <button class="tbtn tbtn-undo" id="btnUndo" disabled aria-label="Undo last cut">↩ Undo</button>
-    <button class="tbtn tbtn-addcut" id="btnAddCut" disabled aria-label="Add cut at current handle position">+ Add Cut</button>
-    <button class="tbtn tbtn-refresh" id="btnRefresh" aria-label="Clear all content and start fresh">⟳ Refresh</button>
+    <button class="tbtn tbtn-undo" id="btnUndo" disabled data-i18n="uiBtnUndo" data-i18n-aria="ariaUndoLastCut" aria-label="Undo last cut">↩ Undo</button>
+    <button class="tbtn tbtn-addcut" id="btnAddCut" disabled data-i18n="uiBtnAddCut" data-i18n-aria="ariaAddCut" aria-label="Add cut at current handle position">+ Add Cut</button>
+    <button class="tbtn tbtn-refresh" id="btnRefresh" data-i18n="uiBtnRefresh" data-i18n-aria="ariaRefresh" aria-label="Clear all content and start fresh">⟳ Refresh</button>
   </div>
   <div class="toolbar-row">
-    <button class="tbtn tbtn-copy" id="btnCopy" disabled aria-label="View and copy chunks">⊕ View Chunks</button>
+    <button class="tbtn tbtn-copy" id="btnCopy" disabled data-i18n="uiBtnViewChunks" data-i18n-aria="ariaViewChunks" aria-label="View and copy chunks">⊕ View Chunks</button>
   </div>
 </div>
 
 <div class="content-wrap">
   <div class="scroller" id="scroller">
     <div class="scroll-inner" id="scrollInner">
-      <textarea id="txt" aria-label="Text content to split" placeholder="Paste your text content here…&#10;&#10;Once pasted:&#10;  ↓  Drag the white handle downward to cover content for chunk 1&#10;      The KB size updates live as you drag&#10;  +  Click 'Add Cut' to lock that chunk and start the next&#10;  ↕  All handles stay draggable — resize any chunk anytime&#10;  ⊕  Click 'View Chunks' to copy/export"></textarea>
+      <textarea id="txt" data-i18n-aria="ariaTextContent" aria-label="Text content to split" placeholder="Paste your text content here…&#10;&#10;Once pasted:&#10;  ↓  Drag the white handle downward to cover content for chunk 1&#10;      The KB size updates live as you drag&#10;  +  Click 'Add Cut' to lock that chunk and start the next&#10;  ↕  All handles stay draggable — resize any chunk anytime&#10;  ⊕  Click 'View Chunks' to copy/export"></textarea>
       <div class="overlay" id="overlay"></div>
     </div>
   </div>
 </div>
 
 <!-- TRAY -->
-<div class="tray" id="tray" role="dialog" aria-label="Chunks tray" aria-modal="true">
+<div class="tray" id="tray" role="dialog" data-i18n-aria="ariaChunksTray" aria-label="Chunks tray" aria-modal="true">
   <div class="tray-head">
     <span class="tray-title" id="trayTitle">0 chunks</span>
     <div class="tray-acts">
-      <button class="tray-btn" id="trayCopyAll" aria-label="Copy all chunks to clipboard">copy all</button>
-      <button class="tray-close" id="trayClose" aria-label="Close chunks tray">✕</button>
+      <button class="tray-btn" id="trayCopyAll" data-i18n="uiTrayCopyAll" data-i18n-aria="ariaCopyAll" aria-label="Copy all chunks to clipboard">copy all</button>
+      <button class="tray-close" id="trayClose" data-i18n-aria="ariaCloseTray" aria-label="Close chunks tray">✕</button>
     </div>
   </div>
-  <div class="tray-scroll" id="trayScroll" role="list" aria-label="Chunk list"></div>
+  <div class="tray-scroll" id="trayScroll" role="list" data-i18n-aria="ariaChunkList" aria-label="Chunk list"></div>
 
 </div>
 

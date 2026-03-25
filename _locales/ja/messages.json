@@ -8,6 +8,132 @@
   "actionTitle": {
     "message": "コンテンツスライサーを開く"
   },
+
+  "uiBrandName": {
+    "message": "コンテンツスライサー"
+  },
+  "uiStatTotal": {
+    "message": "合計"
+  },
+  "uiStatChunks": {
+    "message": "チャンク"
+  },
+  "uiStatRemaining": {
+    "message": "残り"
+  },
+  "uiBtnUndo": {
+    "message": "↩ 元に戻す"
+  },
+  "uiBtnAddCut": {
+    "message": "+ カット追加"
+  },
+  "uiBtnRefresh": {
+    "message": "⟳ リフレッシュ"
+  },
+  "uiBtnViewChunks": {
+    "message": "⊕ チャンク表示"
+  },
+  "uiTrayCopyAll": {
+    "message": "すべてコピー"
+  },
+  "uiPlaceholder": {
+    "message": "ここにテキストを貼り付けてください…\n\n貼り付け後:\n  ↓  白いハンドルを下にドラッグしてチャンク1の範囲を設定\n      ドラッグ中にKBサイズがリアルタイムで更新されます\n  +  「カット追加」をクリックしてチャンクを確定し次へ\n  ↕  すべてのハンドルはドラッグ可能 — いつでもサイズ変更可能\n  ⊕  「チャンク表示」をクリックしてコピー/エクスポート"
+  },
+  "uiChunkTitle": {
+    "message": "$COUNT$ チャンク",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "uiChunkTitleSingular": {
+    "message": "$COUNT$ チャンク",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "uiChunkLabel": {
+    "message": "チャンク $NUM$",
+    "placeholders": { "num": { "content": "$1" } }
+  },
+  "uiCharsCount": {
+    "message": "$COUNT$ 文字",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "uiSegmentMeta": {
+    "message": "#$NUM$ · $CHARS$ 文字",
+    "placeholders": { "num": { "content": "$1" }, "chars": { "content": "$2" } }
+  },
+  "uiCopyBtn": {
+    "message": "コピー"
+  },
+  "uiCopiedLabel": {
+    "message": "✓ コピー済み "
+  },
+  "uiCloseLabel": {
+    "message": "✕ 閉じる"
+  },
+  "uiFromChunkStart": {
+    "message": "チャンク先頭から $SIZE$",
+    "placeholders": { "size": { "content": "$1" } }
+  },
+  "uiStatDone": {
+    "message": "完了"
+  },
+  "uiStatPercentLeft": {
+    "message": "残り $PCT$%",
+    "placeholders": { "pct": { "content": "$1" } }
+  },
+  "uiLimitMax": {
+    "message": " · 上限"
+  },
+  "uiLimitNear": {
+    "message": " · 上限に近い"
+  },
+
+  "ariaSlicerControls": {
+    "message": "スライサーコントロール"
+  },
+  "ariaUndoLastCut": {
+    "message": "最後のカットを元に戻す"
+  },
+  "ariaAddCut": {
+    "message": "現在のハンドル位置でカット追加"
+  },
+  "ariaRefresh": {
+    "message": "すべてクリアしてやり直す"
+  },
+  "ariaViewChunks": {
+    "message": "チャンクの表示とコピー"
+  },
+  "ariaTextContent": {
+    "message": "分割するテキストコンテンツ"
+  },
+  "ariaChunksTray": {
+    "message": "チャンクトレイ"
+  },
+  "ariaCopyAll": {
+    "message": "すべてのチャンクをクリップボードにコピー"
+  },
+  "ariaCloseTray": {
+    "message": "チャンクトレイを閉じる"
+  },
+  "ariaChunkList": {
+    "message": "チャンクリスト"
+  },
+  "ariaCutHandle": {
+    "message": "カットハンドル $NUM$",
+    "placeholders": { "num": { "content": "$1" } }
+  },
+  "ariaDeleteCut": {
+    "message": "カット $NUM$ を削除",
+    "placeholders": { "num": { "content": "$1" } }
+  },
+  "ariaActiveHandle": {
+    "message": "アクティブチャンクハンドル"
+  },
+  "ariaCutPosHandle": {
+    "message": "カット位置ハンドル"
+  },
+  "ariaChunkSizeHandle": {
+    "message": "チャンクサイズハンドル"
+  },
+
   "copyFailed": {
     "message": "コピー失敗 — テキストを手動で選択してください"
   },
@@ -19,21 +145,11 @@
   },
   "reportIntro": {
     "message": "「ケースコメント」の入力文字数制限により、回答は$COUNT$つに分けてご報告させて頂きます。",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "3"
-      }
-    }
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
   },
   "reportHeader": {
     "message": "【ご報告$NUM$】",
-    "placeholders": {
-      "num": {
-        "content": "$1",
-        "example": "1"
-      }
-    }
+    "placeholders": { "num": { "content": "$1", "example": "1" } }
   },
   "sessionRestored": {
     "message": "前回のセッションを復元しました"
@@ -58,12 +174,7 @@
   },
   "chunkAdded": {
     "message": "チャンク$NUM$を追加しました ✓",
-    "placeholders": {
-      "num": {
-        "content": "$1",
-        "example": "2"
-      }
-    }
+    "placeholders": { "num": { "content": "$1", "example": "2" } }
   },
   "resetDone": {
     "message": "リセット"
@@ -85,5 +196,8 @@
   },
   "chunkCopied": {
     "message": "チャンクをコピーしました"
+  },
+  "formatNotDetected": {
+    "message": "標準レポート形式が検出されませんでした — チャンクには番号付きヘッダーが使用されます"
   }
 }

@@ -8,6 +8,132 @@
   "actionTitle": {
     "message": "Open Content Slicer"
   },
+
+  "uiBrandName": {
+    "message": "content slicer"
+  },
+  "uiStatTotal": {
+    "message": "total"
+  },
+  "uiStatChunks": {
+    "message": "chunks"
+  },
+  "uiStatRemaining": {
+    "message": "remaining"
+  },
+  "uiBtnUndo": {
+    "message": "↩ Undo"
+  },
+  "uiBtnAddCut": {
+    "message": "+ Add Cut"
+  },
+  "uiBtnRefresh": {
+    "message": "⟳ Refresh"
+  },
+  "uiBtnViewChunks": {
+    "message": "⊕ View Chunks"
+  },
+  "uiTrayCopyAll": {
+    "message": "copy all"
+  },
+  "uiPlaceholder": {
+    "message": "Paste your text content here…\n\nOnce pasted:\n  ↓  Drag the white handle downward to cover content for chunk 1\n      The KB size updates live as you drag\n  +  Click 'Add Cut' to lock that chunk and start the next\n  ↕  All handles stay draggable — resize any chunk anytime\n  ⊕  Click 'View Chunks' to copy/export"
+  },
+  "uiChunkTitle": {
+    "message": "$COUNT$ chunks",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "uiChunkTitleSingular": {
+    "message": "$COUNT$ chunk",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "uiChunkLabel": {
+    "message": "chunk $NUM$",
+    "placeholders": { "num": { "content": "$1" } }
+  },
+  "uiCharsCount": {
+    "message": "$COUNT$ chars",
+    "placeholders": { "count": { "content": "$1" } }
+  },
+  "uiSegmentMeta": {
+    "message": "#$NUM$ · $CHARS$ chars",
+    "placeholders": { "num": { "content": "$1" }, "chars": { "content": "$2" } }
+  },
+  "uiCopyBtn": {
+    "message": "copy"
+  },
+  "uiCopiedLabel": {
+    "message": "✓ copied "
+  },
+  "uiCloseLabel": {
+    "message": "✕ close"
+  },
+  "uiFromChunkStart": {
+    "message": "$SIZE$ from start of chunk",
+    "placeholders": { "size": { "content": "$1" } }
+  },
+  "uiStatDone": {
+    "message": "done"
+  },
+  "uiStatPercentLeft": {
+    "message": "$PCT$% left",
+    "placeholders": { "pct": { "content": "$1" } }
+  },
+  "uiLimitMax": {
+    "message": " · MAX"
+  },
+  "uiLimitNear": {
+    "message": " · near max"
+  },
+
+  "ariaSlicerControls": {
+    "message": "Slicer controls"
+  },
+  "ariaUndoLastCut": {
+    "message": "Undo last cut"
+  },
+  "ariaAddCut": {
+    "message": "Add cut at current handle position"
+  },
+  "ariaRefresh": {
+    "message": "Clear all content and start fresh"
+  },
+  "ariaViewChunks": {
+    "message": "View and copy chunks"
+  },
+  "ariaTextContent": {
+    "message": "Text content to split"
+  },
+  "ariaChunksTray": {
+    "message": "Chunks tray"
+  },
+  "ariaCopyAll": {
+    "message": "Copy all chunks to clipboard"
+  },
+  "ariaCloseTray": {
+    "message": "Close chunks tray"
+  },
+  "ariaChunkList": {
+    "message": "Chunk list"
+  },
+  "ariaCutHandle": {
+    "message": "Cut handle $NUM$",
+    "placeholders": { "num": { "content": "$1" } }
+  },
+  "ariaDeleteCut": {
+    "message": "Delete cut $NUM$",
+    "placeholders": { "num": { "content": "$1" } }
+  },
+  "ariaActiveHandle": {
+    "message": "Active chunk handle"
+  },
+  "ariaCutPosHandle": {
+    "message": "cut position handle"
+  },
+  "ariaChunkSizeHandle": {
+    "message": "chunk size handle"
+  },
+
   "copyFailed": {
     "message": "Copy failed — please select text manually"
   },
@@ -19,21 +145,11 @@
   },
   "reportIntro": {
     "message": "「ケースコメント」の入力文字数制限により、回答は$COUNT$つに分けてご報告させて頂きます。",
-    "placeholders": {
-      "count": {
-        "content": "$1",
-        "example": "3"
-      }
-    }
+    "placeholders": { "count": { "content": "$1", "example": "3" } }
   },
   "reportHeader": {
     "message": "【ご報告$NUM$】",
-    "placeholders": {
-      "num": {
-        "content": "$1",
-        "example": "1"
-      }
-    }
+    "placeholders": { "num": { "content": "$1", "example": "1" } }
   },
   "sessionRestored": {
     "message": "Previous session restored"
@@ -58,12 +174,7 @@
   },
   "chunkAdded": {
     "message": "chunk $NUM$ added ✓",
-    "placeholders": {
-      "num": {
-        "content": "$1",
-        "example": "2"
-      }
-    }
+    "placeholders": { "num": { "content": "$1", "example": "2" } }
   },
   "resetDone": {
     "message": "reset"
@@ -85,5 +196,8 @@
   },
   "chunkCopied": {
     "message": "chunk copied"
+  },
+  "formatNotDetected": {
+    "message": "Standard report format not detected — chunks will use numbered headers"
   }
 }

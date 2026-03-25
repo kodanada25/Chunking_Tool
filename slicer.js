@@ -1,12 +1,68 @@
 document.addEventListener('DOMContentLoaded', () => {
 
 // ── i18n HELPER ─────────────────────────────────────────────
+// _manualMessages is populated by initLocale() when the browser's preferred
+// language differs from chrome.i18n's UI language (common on Edge / Windows).
+let _manualMessages = null;
+
+function resolveManualMessage(key, subs){
+  const entry = _manualMessages[key];
+  if(!entry) return null;
+  let message = entry.message;
+  if(subs && entry.placeholders){
+    for(const [name, def] of Object.entries(entry.placeholders)){
+      const match = def.content.match(/\$(\d+)/);
+      if(!match) continue;
+      const idx = parseInt(match[1]) - 1;
+      if(subs[idx] !== undefined){
+        message = message.replace(new RegExp('\\$' + name + '\\$', 'gi'), subs[idx]);
+      }
+    }
+  }
+  return message;
+}
+
 function msg(key, subs){
+  if(_manualMessages && _manualMessages[key]){
+    return resolveManualMessage(key, subs);
+  }
   if(typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getMessage){
     const m = chrome.i18n.getMessage(key, subs);
     if(m) return m;
   }
   return key;
+}
+
+// Detect preferred language and load the matching locale if chrome.i18n
+// doesn't already serve it (e.g. browser UI is English but user prefers Japanese).
+async function initLocale(){
+  const navLang = (navigator.language || '').slice(0, 2).toLowerCase();
+  if(!navLang) return;
+
+  if(typeof chrome !== 'undefined' && chrome.i18n && chrome.i18n.getUILanguage){
+    const uiLang = chrome.i18n.getUILanguage().slice(0, 2).toLowerCase();
+    if(uiLang === navLang) return;
+  }
+
+  try {
+    const resp = await fetch(`_locales/${navLang}/messages.json`);
+    if(resp.ok) _manualMessages = await resp.json();
+  } catch(e){ /* locale not available — keep default */ }
+}
+
+// ── LOCALIZE STATIC UI ──────────────────────────────────────
+function localizeUI(){
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const localized = msg(el.dataset.i18n);
+    if(localized && localized !== el.dataset.i18n) el.textContent = localized;
+  });
+  document.querySelectorAll('[data-i18n-aria]').forEach(el => {
+    const localized = msg(el.dataset.i18nAria);
+    if(localized && localized !== el.dataset.i18nAria) el.setAttribute('aria-label', localized);
+  });
+  const txt = document.getElementById('txt');
+  const ph = msg('uiPlaceholder');
+  if(ph && ph !== 'uiPlaceholder') txt.placeholder = ph;
 }
 
 // ── TOAST ───────────────────────────────────────────────────
@@ -249,10 +305,10 @@ function render(){
       el('div', {className:'seg-badge'},
         el('div', {className:'seg-swatch', cssText:`background:${rgb(i)}`}),
         el('span', {className:'seg-kb'}, fmtB(bytes)),
-        el('span', {className:'seg-meta'}, `#${i+1} \u00b7 ${chars.toLocaleString()} chars`)
+        el('span', {className:'seg-meta'}, msg('uiSegmentMeta', [String(i+1), chars.toLocaleString()]))
       ),
       el('div', {className:'seg-size-corner'}, fmtB(bytes),
-        el('span', {className:'seg-size-corner-sub'}, `${chars.toLocaleString()} chars`)
+        el('span', {className:'seg-size-corner-sub'}, msg('uiCharsCount', [chars.toLocaleString()]))
       )
     );
     overlay.appendChild(band);
@@ -269,16 +325,16 @@ function render(){
     const atLimit = bytes >= MAX_CHUNK_BYTES;
     const nearLimit = bytes >= MAX_CHUNK_BYTES * 0.9;
     const badgeColor = atLimit ? '#c0392b' : nearLimit ? '#c05a00' : '#0F5599';
-    const limitLabel = atLimit ? ' · MAX' : nearLimit ? ' · near max' : '';
+    const limitLabel = atLimit ? msg('uiLimitMax') : nearLimit ? msg('uiLimitNear') : '';
     const activeBand = el('div', {className:'seg-band', cssText:`top:${activeTop}px;height:${activeBot-activeTop}px`},
       el('div', {className:'seg-fill', cssText:`background:${rgba(ci,.42)}`}),
       el('div', {className:'seg-badge', cssText:`border-color:rgba(${atLimit?'192,57,43':'15,85,153'},.3)`},
         el('div', {className:'seg-swatch', cssText:`background:${rgb(ci)}`}),
         el('span', {className:'seg-kb', cssText:`color:${badgeColor}`}, fmtB(bytes) + limitLabel),
-        el('span', {className:'seg-meta'}, `#${ci+1} \u00b7 ${chars.toLocaleString()} chars`)
+        el('span', {className:'seg-meta'}, msg('uiSegmentMeta', [String(ci+1), chars.toLocaleString()]))
       ),
       el('div', {className:'seg-size-corner', cssText:`color:${badgeColor}`}, fmtB(bytes),
-        el('span', {className:'seg-size-corner-sub'}, `${chars.toLocaleString()} chars`)
+        el('span', {className:'seg-size-corner-sub'}, msg('uiCharsCount', [chars.toLocaleString()]))
       )
     );
     overlay.appendChild(activeBand);
@@ -288,13 +344,13 @@ function render(){
   cuts.forEach((cutPx, idx) => {
     const prevCh = idx > 0 ? cutChars[idx-1] : 0;
     const prevBytes = ENC.encode(text.slice(prevCh, cutChars[idx])).length;
-    const delBtn = el('button', {className:'cut-del', 'aria-label':`Delete cut ${idx+1}`}, '\u2715');
+    const delBtn = el('button', {className:'cut-del', 'aria-label':msg('ariaDeleteCut', [String(idx+1)])}, '\u2715');
     const h = el('div', {
       className:'cut-handle',
       cssText:`top:${cutPx}px`,
       role:'slider',
-      'aria-label':`Cut handle ${idx+1}`,
-      'aria-roledescription':'cut position handle',
+      'aria-label':msg('ariaCutHandle', [String(idx+1)]),
+      'aria-roledescription':msg('ariaCutPosHandle'),
       'aria-valuenow':String(Math.round(cutPx)),
       'aria-valuemin':'0',
       'aria-valuemax':String(Math.round(totalH)),
@@ -302,7 +358,7 @@ function render(){
     },
       el('div', {className:'cut-line'}),
       el('div', {className:'cut-pill'}),
-      el('span', {className:'cut-tooltip'}, `${fmtB(prevBytes)} from start of chunk`),
+      el('span', {className:'cut-tooltip'}, msg('uiFromChunkStart', [fmtB(prevBytes)])),
       delBtn
     );
 
@@ -357,8 +413,8 @@ function render(){
       className:'active-handle',
       cssText:`top:${activeBottomPx}px`,
       role:'slider',
-      'aria-label':'Active chunk handle',
-      'aria-roledescription':'chunk size handle',
+      'aria-label':msg('ariaActiveHandle'),
+      'aria-roledescription':msg('ariaChunkSizeHandle'),
       'aria-valuenow':String(Math.round(activeBottomPx)),
       'aria-valuemin':'0',
       'aria-valuemax':String(Math.round(totalH)),
@@ -567,6 +623,9 @@ txtEl.addEventListener('paste', () => setTimeout(() => {
   if(text && !cuts.length && activeBottomPx === 0){
     activeBottomPx = pxForBytes(0, DEFAULT_BYTES);
   }
+  if(text && !text.includes(msg('triggerLine'))){
+    toast(msg('formatNotDetected'));
+  }
   render(); updateStats(); updateToolbar();
 }, 30));
 
@@ -629,11 +688,11 @@ document.getElementById('btnUndo').addEventListener('click', () => {
 function updateStats(){
   const totalBytes = ENC.encode(text).length;
   document.getElementById('hs-size').textContent = fmtB(totalBytes);
-  document.getElementById('hs-segs').textContent = cuts.length;
+  document.getElementById('hs-segs').textContent = getSegments().length;
   const totalH = txtEl.scrollHeight || 1;
   const pctLeft = Math.round((1 - activeBottomPx / totalH) * 100);
   document.getElementById('hs-remain').textContent =
-    activeBottomPx >= totalH - 10 ? 'done' : pctLeft + '% left';
+    activeBottomPx >= totalH - 10 ? msg('uiStatDone') : msg('uiStatPercentLeft', [String(pctLeft)]);
 }
 
 function updateToolbar(){
@@ -720,7 +779,8 @@ document.getElementById('trayCopyAll').onclick = () => {
 
 function renderTray(){
   const segs = getTransformedSegments();
-  document.getElementById('trayTitle').textContent = `${segs.length} chunk${segs.length===1?'':'s'}`;
+  const titleKey = segs.length === 1 ? 'uiChunkTitleSingular' : 'uiChunkTitle';
+  document.getElementById('trayTitle').textContent = msg(titleKey, [String(segs.length)]);
   const scroll = document.getElementById('trayScroll');
   if(!segs.length){
     scroll.replaceChildren(el('div', {className:'tray-empty'}, msg('noChunksYet')));
@@ -735,18 +795,18 @@ function renderTray(){
       el('div', {className:'chunk-card', id:`chunk-card-${i}`, role:'listitem'},
         el('div', {className:'chunk-copied-badge'},
           el('span', {className:'chunk-copied-label'},
-            '\u2713 copied ',
-            el('button', {className:'chunk-copied-close', 'data-close':String(i)}, '\u2715 close')
+            msg('uiCopiedLabel'),
+            el('button', {className:'chunk-copied-close', 'data-close':String(i)}, msg('uiCloseLabel'))
           )
         ),
         el('div', {className:'chunk-stripe', cssText:`background:${c}`}),
         el('div', {className:'chunk-info'},
-          el('div', {className:'chunk-n'}, `chunk ${String(i+1).padStart(2,'0')}`),
+          el('div', {className:'chunk-n'}, msg('uiChunkLabel', [String(i+1).padStart(2,'0')])),
           el('div', {className:'chunk-kb'}, fmtB(seg.bytes)),
-          el('div', {className:'chunk-ch'}, `${seg.chars.toLocaleString()} chars`)
+          el('div', {className:'chunk-ch'}, msg('uiCharsCount', [seg.chars.toLocaleString()]))
         ),
         body,
-        el('button', {className:'chunk-cp', 'data-cpone':String(i)}, 'copy')
+        el('button', {className:'chunk-cp', 'data-cpone':String(i)}, msg('uiCopyBtn'))
       )
     );
   });
@@ -886,7 +946,8 @@ function restoreSession(){
   });
 }
 
-// Restore on load
+// Detect preferred locale, localize UI, then restore session
+initLocale().then(() => localizeUI());
 window.addEventListener('load', restoreSession);
 
 
