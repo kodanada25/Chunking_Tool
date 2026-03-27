@@ -157,8 +157,8 @@ const scroller   = document.getElementById('scroller');
 const scrollInner= document.getElementById('scrollInner');
 const overlay    = document.getElementById('overlay');
 
-const DEFAULT_BYTES = 3.8 * 1024;
-const MAX_CHUNK_BYTES = 4 * 1024; // hard cap — user cannot drag beyond 4 KB
+const DEFAULT_BYTES = 3.2 * 1024;
+const MAX_CHUNK_BYTES = 3.5 * 1024; // hard cap — user cannot drag beyond 3.5 KB
 
 // ── HEIGHT SYNC ────────────────────────────────────────────
 function syncHeights(){
@@ -571,7 +571,7 @@ function lockChunk(){
     const bandMid = cuts[cuts.length-1] + (activeBottomPx - cuts[cuts.length-1]) / 2;
     const scrollerH = scroller.getBoundingClientRect().height;
     scroller.scrollTop = Math.max(0, bandMid - scrollerH / 2);
-    toast(msg('chunkAdded', [String(cuts.length)]));
+    toast(msg('chunkAdded', [String(cuts.length + 1)]));
   }
   updateToolbar();
 }
@@ -626,6 +626,7 @@ txtEl.addEventListener('paste', () => setTimeout(() => {
   if(text && !text.includes(msg('triggerLine'))){
     toast(msg('formatNotDetected'));
   }
+  if(text) txtEl.readOnly = true;
   render(); updateStats(); updateToolbar();
 }, 30));
 
@@ -661,6 +662,7 @@ document.getElementById('btnRefresh').addEventListener('click', () => {
   hardReset();
   text = '';
   txtEl.value = '';
+  txtEl.readOnly = false;
   if(mirror){ mirror.textContent = ''; }
   syncHeights();
   scroller.scrollTop = 0;
@@ -791,23 +793,36 @@ function renderTray(){
     const c = rgb(seg.colorIdx);
     const body = el('div', {className:'chunk-body', 'data-expand':'1'});
     body.textContent = seg.transformed;
+
+    const chunkCard = el('div', {className:'chunk-card', id:`chunk-card-${i}`, role:'listitem'},
+      el('div', {className:'chunk-copied-badge'},
+        el('span', {className:'chunk-copied-label'},
+          msg('uiCopiedLabel'),
+          el('button', {className:'chunk-copied-close', 'data-close':String(i)}, msg('uiCloseLabel'))
+        )
+      ),
+      el('div', {className:'chunk-stripe', cssText:`background:${c}`}),
+      el('div', {className:'chunk-info'},
+        el('div', {className:'chunk-n'}, msg('uiChunkLabel', [String(i+1).padStart(2,'0')])),
+        el('div', {className:'chunk-kb'}, fmtB(seg.bytes)),
+        el('div', {className:'chunk-ch'}, msg('uiCharsCount', [seg.chars.toLocaleString()]))
+      ),
+      body,
+      el('button', {className:'chunk-cp', 'data-cpone':String(i)}, msg('uiCopyBtn'))
+    );
+
+    const approvalCard = el('div', {className:'approval-card', id:`approval-card-${i}`},
+      el('div', {className:'approval-copied-badge'},
+        el('span', {className:'approval-copied-label'},
+          msg('uiCopiedLabel'),
+          el('button', {className:'approval-copied-close', 'data-approval-close':String(i)}, msg('uiCloseLabel'))
+        )
+      ),
+      el('button', {className:'approval-btn', type:'button', 'data-approval':String(i)}, msg('uiApprovalBtn'))
+    );
+
     scroll.appendChild(
-      el('div', {className:'chunk-card', id:`chunk-card-${i}`, role:'listitem'},
-        el('div', {className:'chunk-copied-badge'},
-          el('span', {className:'chunk-copied-label'},
-            msg('uiCopiedLabel'),
-            el('button', {className:'chunk-copied-close', 'data-close':String(i)}, msg('uiCloseLabel'))
-          )
-        ),
-        el('div', {className:'chunk-stripe', cssText:`background:${c}`}),
-        el('div', {className:'chunk-info'},
-          el('div', {className:'chunk-n'}, msg('uiChunkLabel', [String(i+1).padStart(2,'0')])),
-          el('div', {className:'chunk-kb'}, fmtB(seg.bytes)),
-          el('div', {className:'chunk-ch'}, msg('uiCharsCount', [seg.chars.toLocaleString()]))
-        ),
-        body,
-        el('button', {className:'chunk-cp', 'data-cpone':String(i)}, msg('uiCopyBtn'))
-      )
+      el('div', {className:'chunk-row'}, chunkCard, approvalCard)
     );
   });
 }
@@ -819,6 +834,19 @@ function cpOne(i){
     const card = document.getElementById('chunk-card-' + i);
     if(card) card.classList.add('copied');
   });
+}
+
+function cpApproval(i){
+  const approvalText = msg('approvalRequestTemplate', [String(i + 1)]);
+  safeCopy(approvalText, msg('approvalRequestCopied'), () => {
+    const ac = document.getElementById('approval-card-' + i);
+    if(ac) ac.classList.add('copied');
+  });
+}
+
+function closeApprovalCopied(i){
+  const ac = document.getElementById('approval-card-' + i);
+  if(ac) ac.classList.remove('copied');
 }
 
 function closeCopied(i){
@@ -932,6 +960,7 @@ function restoreSession(){
             activeBottomPx = pxForBytes(0, DEFAULT_BYTES);
           }
 
+          if(text) txtEl.readOnly = true;
           render(); updateStats(); updateToolbar();
           toast(msg('sessionRestored'));
           scheduleAutoClear();
@@ -960,6 +989,14 @@ document.addEventListener('click', e => {
   // close copied badge
   const closeBtn = e.target.closest('[data-close]');
   if(closeBtn){ closeCopied(parseInt(closeBtn.dataset.close)); return; }
+
+  // close approval copied badge
+  const approvalCloseBtn = e.target.closest('[data-approval-close]');
+  if(approvalCloseBtn){ closeApprovalCopied(parseInt(approvalCloseBtn.dataset.approvalClose)); return; }
+
+  // approval request copy
+  const approvalBtn = e.target.closest('[data-approval]');
+  if(approvalBtn){ cpApproval(parseInt(approvalBtn.dataset.approval)); return; }
 
   // expand chunk body
   const expandEl = e.target.closest('[data-expand]');

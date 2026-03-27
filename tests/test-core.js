@@ -85,7 +85,7 @@ describe('isOnBlankLine', () => {
     assert.equal(SlicerCore.isOnBlankLine(6, 'hello\n\nworld'), true);
   });
 
-  it('returns false on a non-blank line with no adjacent blank', () => {
+  it('returns false at start of first line with no blank/break', () => {
     assert.equal(SlicerCore.isOnBlankLine(0, 'hello\nworld'), false);
   });
 
@@ -100,6 +100,20 @@ describe('isOnBlankLine', () => {
 
   it('handles whitespace-only blank lines', () => {
     assert.equal(SlicerCore.isOnBlankLine(6, 'hello\n   \nworld'), true);
+  });
+
+  it('returns true at a line break boundary (start of a non-first line)', () => {
+    assert.equal(SlicerCore.isOnBlankLine(6, 'hello\nworld'), true);
+  });
+
+  it('returns true after Japanese sentence-ending punctuation', () => {
+    assert.equal(SlicerCore.isOnBlankLine(0, 'お勧めします。'), true);
+    assert.equal(SlicerCore.isOnBlankLine(0, '問題です！'), true);
+    assert.equal(SlicerCore.isOnBlankLine(0, '本当ですか？'), true);
+  });
+
+  it('returns false mid-line without sentence-ending punctuation', () => {
+    assert.equal(SlicerCore.isOnBlankLine(2, 'abcdef'), false);
   });
 });
 

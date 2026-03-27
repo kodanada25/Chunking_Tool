@@ -101,6 +101,15 @@
   "ariaViewChunks": {
     "message": "View and copy chunks"
   },
+  "uiBtnRecheck": {
+    "message": "↻ Check Content"
+  },
+  "ariaRecheck": {
+    "message": "Re-check content after editing"
+  },
+  "contentRechecked": {
+    "message": "content re-checked ✓"
+  },
   "ariaTextContent": {
     "message": "Text content to split"
   },
@@ -158,16 +167,16 @@
     "message": "Session expired — data cleared"
   },
   "cutOnBlankLine": {
-    "message": "cut must be on a blank line"
+    "message": "cut must be at a line break or sentence boundary"
   },
   "contentUnder4kb": {
-    "message": "content is under 4 KB — no need to split"
+    "message": "content is under 3.5 KB — no need to split"
   },
   "dragHandleDown": {
     "message": "drag the handle down first"
   },
   "placeOnBlankLine": {
-    "message": "place the handle on a blank line to cut"
+    "message": "place the handle at a line break or after a sentence"
   },
   "allSliced": {
     "message": "all content sliced ✓"
@@ -199,5 +208,17 @@
   },
   "formatNotDetected": {
     "message": "Standard report format not detected — chunks will use numbered headers"
+  },
+  "uiApprovalBtn": {
+    "message": "承認依頼"
+  },
+  "approvalRequestTemplate": {
+    "message": "【ご報告$NUM$】の承認をお願いします。",
+    "placeholders": {
+      "num": { "content": "$1", "example": "1" }
+    }
+  },
+  "approvalRequestCopied": {
+    "message": "approval request copied"
   }
 }

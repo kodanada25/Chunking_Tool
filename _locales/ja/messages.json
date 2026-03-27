@@ -101,6 +101,15 @@
   "ariaViewChunks": {
     "message": "チャンクの表示とコピー"
   },
+  "uiBtnRecheck": {
+    "message": "↻ 内容を再確認"
+  },
+  "ariaRecheck": {
+    "message": "編集後に内容を再確認する"
+  },
+  "contentRechecked": {
+    "message": "内容を再確認しました ✓"
+  },
   "ariaTextContent": {
     "message": "分割するテキストコンテンツ"
   },
@@ -158,16 +167,16 @@
     "message": "セッションの有効期限が切れました — データをクリアしました"
   },
   "cutOnBlankLine": {
-    "message": "カット位置は空白行にしてください"
+    "message": "カットは改行位置または文の区切りに配置してください"
   },
   "contentUnder4kb": {
-    "message": "4 KB以下のため分割不要です"
+    "message": "3.5 KB以下のため分割不要です"
   },
   "dragHandleDown": {
     "message": "まずハンドルを下にドラッグしてください"
   },
   "placeOnBlankLine": {
-    "message": "空白行にハンドルを配置してカットしてください"
+    "message": "改行位置または文の区切りにハンドルを配置してください"
   },
   "allSliced": {
     "message": "すべてのコンテンツをスライスしました ✓"
@@ -199,5 +208,17 @@
   },
   "formatNotDetected": {
     "message": "標準レポート形式が検出されませんでした — チャンクには番号付きヘッダーが使用されます"
+  },
+  "uiApprovalBtn": {
+    "message": "承認依頼"
+  },
+  "approvalRequestTemplate": {
+    "message": "【ご報告$NUM$】の承認をお願いします。",
+    "placeholders": {
+      "num": { "content": "$1", "example": "1" }
+    }
+  },
+  "approvalRequestCopied": {
+    "message": "承認依頼をコピーしました"
   }
 }

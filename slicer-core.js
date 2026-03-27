@@ -26,6 +26,11 @@ var SlicerCore = (function () {
     if (nextNl !== -1 && nextNl + 1 < text.length) {
       if (getLine(nextNl + 1, text).trim().length === 0) return true;
     }
+    // Allow cuts at any line break boundary
+    if (charIdx > 0 && text[charIdx - 1] === '\n') return true;
+    // Allow cuts after sentence-ending punctuation
+    var line = getLine(charIdx, text).trim();
+    if (/[。！？!?\)]$/.test(line)) return true;
     return false;
   }
 
