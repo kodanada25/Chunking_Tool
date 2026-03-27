@@ -678,11 +678,16 @@ document.getElementById('btnRefresh').addEventListener('click', () => {
 document.getElementById('btnUndo').addEventListener('click', () => {
   if(!cuts.length) return;
   const restored = cuts.pop();
+  const restoredChar = cutChars.pop();
   activeBottomPx = restored;
+  activeBottomChar = restoredChar !== undefined ? restoredChar : pxToChar(restored);
+  _resizing = true;
+  render();
+  _resizing = false;
   // scroll handle into view
   const scrollerH = scroller.getBoundingClientRect().height;
   scroller.scrollTop = Math.max(0, restored - scrollerH * 0.6);
-  render(); updateStats(); updateToolbar();
+  updateStats(); updateToolbar();
   toast(msg('lastCutRemoved'));
 });
 
