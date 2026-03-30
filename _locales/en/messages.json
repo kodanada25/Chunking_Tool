@@ -3,7 +3,7 @@
     "message": "Chunking Tool"
   },
   "extensionDescription": {
-    "message": "Chunking Tool is a powerful productivity extension that allows you to effortlessly split large text content into manageable, sized chunks directly within your browser's side panel. Perfect for professionals dealing with character limits in support tickets, case comments, or CRM systems. Key features include intuitive visual drag-handles for precise boundary adjustment, real-time KB size and character count tracking, and smart formatting that automatically adds report headers like [Report 1]. Copy individual chunks or the entire set with a single click. Your work is automatically saved via session persistence, ensuring you never lose progress even if you close the panel."
+    "message": "Split large text into sized chunks via the side panel. Perfect for managing character limits in support tickets."
   },
   "actionTitle": {
     "message": "Open Content Slicer"
