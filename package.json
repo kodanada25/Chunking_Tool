@@ -1,8 +1,8 @@
 {
-  "name": "cect-c-chunking-tool",
+  "name": "chunking-tool",
   "version": "2.3.0",
   "private": true,
-  "description": "CECT-C Chunking Tool — Chrome extension for splitting text into sized chunks.",
+  "description": "Chunking Tool — Chrome extension for splitting text into sized chunks.",
   "scripts": {
     "test": "node --test tests/test-core.js"
   }

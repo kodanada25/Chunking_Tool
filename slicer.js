@@ -703,14 +703,8 @@ function updateStats(){
 }
 
 function updateToolbar(){
-  const has = text.length > 0;
-  const totalBytes = has ? ENC.encode(text).length : 0;
-  const needsSplit = totalBytes > MAX_CHUNK_BYTES;
-  const lastCut = cuts.length ? cuts[cuts.length-1] : 0;
-  const hasActive = activeBottomPx > lastCut + 10;
-  const onBlank = isOnBlankLine(activeBottomChar);
   document.getElementById('btnUndo').disabled    = !cuts.length;
-  document.getElementById('btnAddCut').disabled  = !(has && hasActive && needsSplit && onBlank);
+  document.getElementById('btnAddCut').disabled  = false;
   document.getElementById('btnCopy').disabled    = !cuts.length;
 
 }

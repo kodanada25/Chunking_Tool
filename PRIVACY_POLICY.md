@@ -1,11 +1,11 @@
-# Privacy Policy — CECT-C Chunking Tool
+# Privacy Policy — Chunking Tool
 
 **Effective Date:** 2026-03-25
 **Last Updated:** 2026-03-25
 
 ## Overview
 
-CECT-C Chunking Tool is a Chrome extension that helps users split large text content into smaller chunks for pasting into character-limited fields. This policy describes how the extension handles user data.
+Chunking Tool is a Chrome extension that helps users split large text content into smaller chunks for pasting into character-limited fields. This policy describes how the extension handles user data.
 
 ## Data Collection
 

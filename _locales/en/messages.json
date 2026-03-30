@@ -1,9 +1,9 @@
 {
   "extensionName": {
-    "message": "CECT-C Chunking Tool"
+    "message": "Chunking Tool"
   },
   "extensionDescription": {
-    "message": "CECT-C Chunking Tool."
+    "message": "Chunking Tool."
   },
   "actionTitle": {
     "message": "Open Content Slicer"
