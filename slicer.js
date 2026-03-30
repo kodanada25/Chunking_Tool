@@ -703,8 +703,10 @@ function updateStats(){
 }
 
 function updateToolbar(){
-  document.getElementById('btnUndo').disabled    = !cuts.length;
-  document.getElementById('btnAddCut').disabled  = false;
+  const trayOpen = document.getElementById('tray').classList.contains('open');
+  document.getElementById('btnUndo').disabled    = trayOpen || !cuts.length;
+  document.getElementById('btnAddCut').disabled  = trayOpen;
+  document.getElementById('btnRefresh').disabled = trayOpen;
   document.getElementById('btnCopy').disabled    = !cuts.length;
 
 }
@@ -744,10 +746,12 @@ btnCopy.addEventListener('click', () => {
     const firstFocusable = tray.querySelector('button, [tabindex]:not([tabindex="-1"])');
     if(firstFocusable) firstFocusable.focus();
   }
+  updateToolbar();
 });
 
 document.getElementById('trayClose').onclick = () => {
   tray.classList.remove('open');
+  updateToolbar();
   btnCopy.focus();
 };
 
@@ -755,6 +759,7 @@ document.getElementById('trayClose').onclick = () => {
 tray.addEventListener('keydown', e => {
   if(e.key === 'Escape'){
     tray.classList.remove('open');
+    updateToolbar();
     btnCopy.focus();
     return;
   }
