@@ -21,7 +21,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Extracted pure logic functions into `slicer-core.js` for testability
 - Hardcoded Japanese strings replaced with `chrome.i18n.getMessage()` calls
 
-## [2.2] - Previous Release
+## [0.1] - Previous Release
 
 ### Features
 
