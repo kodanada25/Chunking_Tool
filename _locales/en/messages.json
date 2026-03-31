@@ -6,11 +6,11 @@
     "message": "Split large text into sized chunks via the side panel. Perfect for managing character limits in support tickets."
   },
   "actionTitle": {
-    "message": "Open Content Slicer"
+    "message": "Open Chunking Tool"
   },
 
   "uiBrandName": {
-    "message": "content slicer"
+    "message": "Chunking Tool"
   },
   "uiStatTotal": {
     "message": "total"

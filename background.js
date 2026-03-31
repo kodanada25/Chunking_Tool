@@ -1,4 +1,4 @@
-// Content Slicer — background service worker
+// Chunking Tool — background service worker
 // Opens the native Chrome Side Panel when the toolbar icon is clicked
 
 chrome.sidePanel
